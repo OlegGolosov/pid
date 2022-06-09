@@ -9,7 +9,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 # Options
 #
 set(PID_BUNDLED_AT OFF CACHE BOOL "Get and build AnalysisTree")
-set(PID_BUNDLED_AT_VERSION "master" CACHE STRING "Bundled AnalysisTree version")
+set(PID_BUNDLED_AT_VERSION "v2.2.7" CACHE STRING "Bundled AnalysisTree version")
+set(PID_BUNDLED_AT_GIT_SHALLOW ON CACHE BOOL "Use CMake GIT_SHALLOW option")
 
 # Telling CMake where to find the ROOT installation.
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})

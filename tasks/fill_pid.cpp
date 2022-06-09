@@ -8,14 +8,10 @@ void fill_pid(const std::string& filelist, const std::string& pid_file, const st
 
   auto* man = TaskManager::GetInstance();
   man->SetOutputName(output, "aTree");
-  man->SetOutputTreeConfig(OutputTreeConfig(eBranchWriteMode::kCopyTree));
-  //  man->SetOutputTreeConfig(OutputTreeConfig(eBranchWriteMode::kCopyTree));
+  man->SetWriteMode(eBranchWriteMode::kCopyTree);
+  man->SetBranchesExclude({"TrdTracks", "RichRings"});
 
   auto* pid_task = new PidFiller(pid_file, "pid_getter");
-  //  pid_task->SetTracksName("VtxTracks");
-  //  pid_task->SetTofName("TofHits");
-  //  pid_task->SetMcParticlesName("SimParticles");
-  //  pid_task->SetPidCodes({{2212, "p"}, {211, "pi"}, {321, "K"}, {1, "bg"}});
 
   man->AddTask(pid_task);
 

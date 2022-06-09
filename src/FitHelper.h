@@ -1,9 +1,9 @@
 #ifndef PID_SRC_FITHELPER_H_
 #define PID_SRC_FITHELPER_H_
 
-#include <TCutG.h>
-#include "ParticleFit.h"
 #include "Fitter.h"
+#include "ParticleFit.h"
+#include <TCutG.h>
 
 TH2* cutTH2(std::shared_ptr<TH2D> hFull, TCutG* cut) {
   std::string name = hFull->GetName();

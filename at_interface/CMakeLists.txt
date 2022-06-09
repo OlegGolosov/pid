@@ -5,11 +5,11 @@ set(SOURCES
   )
 
 string(REPLACE ".cpp" ".hpp" HEADERS "${SOURCES}")
+include_directories(${PROJECT_INCLUDE_DIRECTORIES} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src)
 add_library(PidAT SHARED ${SOURCES} G__PidAT.cxx)
 
-message(${PROJECT_INCLUDE_DIRECTORIES})
+message("${PROJECT_INCLUDE_DIRECTORIES}")
 
-include_directories(${PROJECT_INCLUDE_DIRECTORIES} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src)
 ROOT_GENERATE_DICTIONARY(G__PidAT ${HEADERS} LINKDEF PidATLinkDef.h)
 target_link_libraries(PidAT ${ROOT_LIBRARIES} AnalysisTreeBase AnalysisTreeInfra Pid)
 

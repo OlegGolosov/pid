@@ -16,9 +16,9 @@ PidFiller::PidFiller(const std::string& file, const std::string& getter) {
 }
 
 int PidFiller::signum(int x) const {
-  if(x>0)
+  if (x > 0)
     return 1;
-  else if (x==0)
+  else if (x == 0)
     return 0;
   else
     return -1;
@@ -54,20 +54,20 @@ void PidFiller::Init() {
   auto match_br = {"SimParticles", "RichRings", "TofHits", "TrdTracks"};
   out_matches_.assign(match_br.size(), nullptr);
 
-  for(const auto& br : match_br){
+  for (const auto& br : match_br) {
     in_matches_.emplace_back(chain->GetMatchPointers().find({rec_tracks_name_ + "2" + br})->second);
     man->AddMatching(out_branch_name_, br, out_matches_.at(i));
     i++;
   }
-  
+
   qp_tof_field_ = tof_hits_.GetField("qp_tof");
   q_field_ = rec_tracks_.GetField("q");
   mass2_field_ = tof_hits_.GetField("mass2");
   pid_field_ = ana_tracks_.GetField("pid");
-  
+
   for (const auto& pid : pid_codes_) {
     prob_field_.push_back(ana_tracks_.GetField("prob_" + pid.second));
-  }  
+  }
 }
 
 void PidFiller::Exec() {
@@ -86,10 +86,10 @@ void PidFiller::Exec() {
       auto m2 = tof_hit[mass2_field_];
 
       auto pid = getter_->GetPid(pq, m2, 0.5);
-      if(pid == 1 && q < 0) {
+      if (pid == 1 && q < 0) {
         pid = -1;
       }
-      
+
       particle.SetValue(pid_field_, pid);
       auto prob = getter_->GetBayesianProbability(pq, m2);
 
@@ -97,18 +97,18 @@ void PidFiller::Exec() {
 
       int specie{0};
       for (const auto& pdg : pid_codes_) {
-        particle.SetValue(prob_field_.at(specie++), prob[pdg.first*signum(q)]);  // Think what to do in case of electrons and muons
+        particle.SetValue(prob_field_.at(specie++), prob[pdg.first * signum(q)]);// Think what to do in case of electrons and muons
       }
     } else {
       int specie{0};
       for (const auto& pdg : pid_codes_) {
         particle.SetValue(prob_field_.at(specie++), -1.f);
       }
-      particle.SetValue(pid_field_, 2*signum(q));
+      particle.SetValue(pid_field_, 2 * signum(q));
     }
   }
   int i{0};
-  for (auto& match : out_matches_){
+  for (auto& match : out_matches_) {
     auto m1 = in_matches_[i]->GetMatches(false);
     auto m2 = in_matches_[i]->GetMatches(true);
     match->SetMatches(m1, m2);
