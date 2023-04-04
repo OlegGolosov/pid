@@ -90,6 +90,8 @@ install(
         OPTIONAL
 )
 
+configure_file(cmake_modules/PidConfig.sh.in ${CMAKE_BINARY_DIR}/PidConfig.sh)
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/Pid/PidConfigVersion.cmake"
@@ -126,6 +128,14 @@ install(FILES
         "${CMAKE_CURRENT_BINARY_DIR}/Pid/PidConfigVersion.cmake"
         DESTINATION
         ${ConfigPackageLocation}
+        COMPONENT
+        Devel
+        )
+
+install(FILES
+        ${CMAKE_BINARY_DIR}/PidConfig.sh
+        DESTINATION
+        bin
         COMPONENT
         Devel
         )

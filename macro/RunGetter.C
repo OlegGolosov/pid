@@ -25,7 +25,8 @@ void RunGetter(TString InputFile = "pid_getter.root") {
   std::unique_ptr<Pid::Getter> getter{(Pid::Getter*) f2->Get("pid_getter")};
   std::unique_ptr<TRandom> r{new TRandom};
 
-  std::vector<int> fittedPids = {PidParticles::kBgPos, PidParticles::kPionPos, PidParticles::kKaonPos, PidParticles::kProton, PidParticles::kHe3, PidParticles::kDeutron, PidParticles::kBgNeg, PidParticles::kPionNeg, PidParticles::kKaonNeg};
+//   std::vector<int> fittedPids = {PidParticles::kBgPos, PidParticles::kPionPos, PidParticles::kKaonPos, PidParticles::kProton, PidParticles::kHe3, PidParticles::kDeutron, PidParticles::kBgNeg, PidParticles::kPionNeg, PidParticles::kKaonNeg};
+  std::vector<int> fittedPids = {PidParticles::kBgPos, PidParticles::kPionPos, PidParticles::kKaonPos, PidParticles::kProton, PidParticles::kBgNeg, PidParticles::kPionNeg, PidParticles::kKaonNeg};
 
   std::map<int, TH2F*> h2Purity;
   for (auto pid : fittedPids) {
@@ -52,6 +53,7 @@ void RunGetter(TString InputFile = "pid_getter.root") {
     gPad->SetLogz();
     h2Purity.at(pid)->Draw("colz");
     h2Purity.at(pid)->GetYaxis()->SetTitleOffset(1.4);
+    h2Purity.at(pid)->SetMinimum(0.5);
   }
   /*    
     for (int i=0; i<10; ++i)

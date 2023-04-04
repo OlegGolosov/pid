@@ -17,42 +17,42 @@
 #include "Getter.h"
 #include "ParticleFit.h"
 
-void run_pid() {
+void run_pid_dcm3() {
   auto start = std::chrono::system_clock::now();
   ROOT::EnableImplicitMT(4);
 
   gROOT->SetBatch(true);
   gROOT->SetEscape(true);
 
-  TString inputFileName = "/home/vklochkov/Soft/pid/input/botv_12agev_default.root";
-  TString cutsFileName = "/home/vklochkov/Soft/pid/input/cuts.root";
-  std::unique_ptr<TFile> fIn{TFile::Open(inputFileName, "read")};
-  std::unique_ptr<TFile> fCuts{TFile::Open(cutsFileName, "read")};
+  TString inputFileName = "/home/oleksii/cbmdir/Pid/input/m2_pq_vtx.apr20.dcmqgsm.3.3agev.root";
+  TString cutsFileName = "/home/oleksii/cbmdir/Pid/input/cuts.root";
+  std::shared_ptr<TFile> fIn{TFile::Open(inputFileName, "read")};
+  std::shared_ptr<TFile> fCuts{TFile::Open(cutsFileName, "read")};
 
   Pid::Getter getter;
 
   Pid::Fitter tof;
   float xmin, xmax, ymin, ymax;
 
-  //  std::shared_ptr<TH2D> hpionpos {(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_piplus")};
+  //  std::shared_ptr<TH2D> hpionpos {(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_piplus")};
   //  std::shared_ptr <TH2D> hpionpos_cut {(TH2D*) cutTH2 (hpionpos, (TCutG*) fCuts->Get("piplus"))};
   //  hpionpos_cut->Rebin2D(10,1);
   //  Pid::ParticleFit pionpos = FitPionsPos(tof, hpionpos_cut);
 
   std::cout << "\n\npionpos\n";
-  xmin = 0.25, xmax = 10.5, ymin = -2., ymax = 2.;
+  xmin = 0.25, xmax = 12., ymin = -2., ymax = 2.;
   tof.SetChi2Max(10000);
-  std::shared_ptr<TH2D> hpionpos{(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_piplus")};
+  std::shared_ptr<TH2D> hpionpos{(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_piplus")};
   std::shared_ptr<TH2D> hpionpos_cut{(TH2D*) cutTH2(hpionpos, (TCutG*) fCuts->Get("piplus"))};
   hpionpos_cut->Rebin2D(10, 1);
   TF1 fit_pionpos("fit_pionpos", "gaus", ymin, ymax);
   fit_pionpos.SetParNames("p0", "p1", "p2");
-  fit_pionpos.SetParLimits(0, 0., 4.e6);
-  fit_pionpos.SetParLimits(1, -.25, 0.03);
-  fit_pionpos.SetParLimits(2, 0., 0.7);
+  fit_pionpos.SetParLimits(0, 0., 2.e6);
+  fit_pionpos.SetParLimits(1, -.1, 0.03);
+  fit_pionpos.SetParLimits(2, 0., 0.35);
   TF1 pionpos_0("pionpos_0", "0", xmin, xmax);
-  TF1 pionpos_1("pionpos_1", "pol9", xmin, xmax);
-  TF1 pionpos_2("pionpos_2", "pol9", xmin, xmax);
+  TF1 pionpos_1("pionpos_1", "pol2", xmin, xmax);
+  TF1 pionpos_2("pionpos_2", "pol5", xmin, xmax);
 
   Pid::ParticleFit pionpos(PidParticles::kPionPos);
   pionpos.SetParametrization({pionpos_0, pionpos_1, pionpos_2});
@@ -62,7 +62,7 @@ void run_pid() {
 
   tof.AddParticle(pionpos, PidParticles::kPionPos);
   tof.SetHisto2D(std::move(hpionpos_cut));
-  tof.SetRangeX(xmin, xmax);
+  tof.SetRangeX(xmin, 8.);
   tof.SetRangeY(ymin, ymax);
   tof.SetOutputFileName("pionpos.root");
   tof.Fit();
@@ -70,9 +70,9 @@ void run_pid() {
   tof.Clear();
 
   std::cout << "\n\nkaonpos\n";
-  xmin = 0.4, xmax = 10.5, ymin = -2., ymax = 2.;
+  xmin = 0.5, xmax = 4.5, ymin = -2., ymax = 2.;
   tof.SetChi2Max(1000);
-  std::shared_ptr<TH2D> hkaonpos{(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_kplus")};
+  std::shared_ptr<TH2D> hkaonpos{(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_kplus")};
   std::shared_ptr<TH2D> hkaonpos_cut{(TH2D*) cutTH2(hkaonpos, (TCutG*) fCuts->Get("kplus"))};
   hkaonpos_cut->Rebin2D(10, 1);
   TF1 fit_kaonpos("fit_kaonpos", "gaus", ymin, ymax);
@@ -81,8 +81,8 @@ void run_pid() {
   fit_kaonpos.SetParLimits(1, -0.05, 0.3);
   fit_kaonpos.SetParLimits(2, 0., 3.);
   TF1 kaonpos_0("kaonpos_0", "0", xmin, xmax);
-  TF1 kaonpos_1("kaonpos_1", "pol9", xmin, xmax);
-  TF1 kaonpos_2("kaonpos_2", "pol8", xmin, xmax);
+  TF1 kaonpos_1("kaonpos_1", "pol2", xmin, xmax);
+  TF1 kaonpos_2("kaonpos_2", "pol6", xmin, xmax);
 
   Pid::ParticleFit kaonpos(PidParticles::kKaonPos);
   kaonpos.SetParametrization({kaonpos_0, kaonpos_1, kaonpos_2});
@@ -100,19 +100,19 @@ void run_pid() {
   tof.Clear();
 
   std::cout << "\n\nproton\n";
-  xmin = 0.4, xmax = 20., ymin = -6., ymax = 6.;
-  tof.SetChi2Max(2000);
-  std::shared_ptr<TH2D> hproton{(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_p")};
+  xmin = 0.3, xmax = 12., ymin = -.5, ymax = 3.;
+  tof.SetChi2Max(10000);
+  std::shared_ptr<TH2D> hproton{(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_p")};
   std::shared_ptr<TH2D> hproton_cut{(TH2D*) cutTH2(hproton, (TCutG*) fCuts->Get("proton"))};
   hproton_cut->Rebin2D(10, 5);
   TF1 fit_proton("fit_proton", "gaus", ymin, ymax);
   fit_proton.SetParNames("p6", "p7", "p8");
   fit_proton.SetParLimits(0, 0., 2.e6);
   fit_proton.SetParLimits(1, 0., 1.1);
-  fit_proton.SetParLimits(2, 0., 2.2);
+  fit_proton.SetParLimits(2, 0., 1.2);
   TF1 proton_0("proton_0", "0", xmin, xmax);
-  TF1 proton_1("proton_1", "pol9", 1.5, 19.);
-  TF1 proton_2("proton_2", "pol12", 1., 20.);
+  TF1 proton_1("proton_1", "pol11", .3, 12.);
+  TF1 proton_2("proton_2", "pol8", .3, 12.);
 
   Pid::ParticleFit proton(PidParticles::kProton);
   proton.SetParametrization({proton_0, proton_1, proton_2});
@@ -120,9 +120,9 @@ void run_pid() {
   proton.SetRange(xmin, xmax);
   proton.SetIsFitted();
 
-  tof.AddParticle(proton, PidParticles::kPionPos);
+  tof.AddParticle(proton, PidParticles::kProton);
   tof.SetHisto2D(std::move(hproton_cut));
-  tof.SetRangeX(xmin, xmax);
+  tof.SetRangeX(xmin, 8.);
   tof.SetRangeY(ymin, ymax);
   tof.SetOutputFileName("proton.root");
   tof.Fit();
@@ -130,8 +130,8 @@ void run_pid() {
   tof.Clear();
 
   //  std::cout << "\n\nhe3\n";
-  //  std::unique_ptr <TH2D> hhe3 {(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_He3")};
-  //  std::unique_ptr <TH2D> hhe3_cut {(TH2D*) cutTH2 (hhe3, (TCutG*) fCuts->Get("he3"))};
+  //  std::shared_ptr <TH2D> hhe3 {(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_He3")};
+  //  std::shared_ptr <TH2D> hhe3_cut {(TH2D*) cutTH2 (hhe3, (TCutG*) fCuts->Get("he3"))};
   //  hhe3_cut->Rebin2D(10,5);
   //  xmin = 1.8, xmax = 8.7, ymin = 0.5, ymax = 3.5;
   //  tof.SetChi2Max(10);
@@ -162,8 +162,8 @@ void run_pid() {
   //  std::cout << "\n\ndeutron\n";
   //  xmin = 1.3, xmax = 20., ymin = -3., ymax = 6.;
   //  tof.SetChi2Max(1000);
-  //  std::unique_ptr <TH2D> hdeutron {(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_d")};
-  //  std::unique_ptr <TH2D> hdeutron_cut {(TH2D*) cutTH2 (hdeutron, (TCutG*) fCuts->Get("deutron"))};
+  //  std::shared_ptr <TH2D> hdeutron {(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_d")};
+  //  std::shared_ptr <TH2D> hdeutron_cut {(TH2D*) cutTH2 (hdeutron, (TCutG*) fCuts->Get("deutron"))};
   //  hdeutron_cut->Rebin2D(10,25);
   //  TF1 fit_deutron ("fit_deutron", "gaus", ymin, ymax);
   //  fit_deutron.SetParNames ("p12", "p13", "p14");
@@ -204,10 +204,10 @@ void run_pid() {
   bgpos.SetIsFitted();
 
   std::cout << "\n\nallpos\n";
-  xmin = 0.3, xmax = 20., ymin = -6., ymax = 6.;
-  std::unique_ptr<TH2D> hpos{(TH2D*) fIn->Get("reco_info/h2TofM2")};
+  xmin = 0.3, xmax = 12., ymin = -6., ymax = 6.;
+  std::shared_ptr<TH2D> hpos{(TH2D*) fIn->Get("reco_info/h2TofM2")};
   hpos->Rebin2D(10, 1);
-  tof.SetChi2Max(10000);
+  tof.SetChi2Max(1e6);
   pionpos.SetIsFixed({false, true, true});
   kaonpos.SetIsFixed({false, true, true});
   proton.SetIsFixed({false, true, true});
@@ -236,19 +236,19 @@ void run_pid() {
   tof.Clear();
 
   std::cout << "\n\npionneg\n";
-  xmin = -12., xmax = -0.25, ymin = -2., ymax = 2.;
+  xmin = -10., xmax = -0.25, ymin = -1., ymax = 1.;
   tof.SetChi2Max(10000);
-  std::shared_ptr<TH2D> hpionneg{(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_piminus")};
+  std::shared_ptr<TH2D> hpionneg{(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_piminus")};
   std::shared_ptr<TH2D> hpionneg_cut{(TH2D*) cutTH2(hpionneg, (TCutG*) fCuts->Get("piminus"))};
   hpionneg_cut->Rebin2D(10, 1);
   TF1 fit_pionneg("fit_pionneg", "gaus", ymin, ymax);
   fit_pionneg.SetParNames("p0", "p1", "p2");
   fit_pionneg.SetParLimits(0, 0., 5.e6);
-  fit_pionneg.SetParLimits(1, -.3, 0.05);
-  fit_pionneg.SetParLimits(2, 0., 2.);
+  fit_pionneg.SetParLimits(1, -.075, 0.25);
+  fit_pionneg.SetParLimits(2, 0., .33);
   TF1 pionneg_0("pionneg_0", "0", xmin, xmax);
-  TF1 pionneg_1("pionneg_1", "pol14", -11.7, xmax);
-  TF1 pionneg_2("pionneg_2", "pol12", -11.7, xmax);
+  TF1 pionneg_1("pionneg_1", "pol2", xmin, xmax);
+  TF1 pionneg_2("pionneg_2", "pol5", xmin, xmax);
 
   Pid::ParticleFit pionneg(PidParticles::kPionNeg);
   pionneg.SetParametrization({pionneg_0, pionneg_1, pionneg_2});
@@ -266,19 +266,19 @@ void run_pid() {
   tof.Clear();
 
   std::cout << "\n\nkaonneg\n";
-  xmin = -10., xmax = -0.25, ymin = -1., ymax = 1.5;
+  xmin = -4., xmax = -0.25, ymin = -1., ymax = 1.5;
   tof.SetChi2Max(100);
-  std::shared_ptr<TH2D> hkaonneg{(TH2D*) fIn->Get("reco_vs_sim_info/h2TofM2_kminus")};
+  std::shared_ptr<TH2D> hkaonneg{(TH2D*) fIn->Get("reco_vs_sim_info_via_vtx/h2TofM2_kminus")};
   std::shared_ptr<TH2D> hkaonneg_cut{(TH2D*) cutTH2(hkaonneg, (TCutG*) fCuts->Get("kminus"))};
   hkaonneg_cut->Rebin2D(10, 2);
   TF1 fit_kaonneg("fit_kaonneg", "gaus", ymin, ymax);
   fit_kaonneg.SetParNames("p3", "p4", "p5");
   fit_kaonneg.SetParLimits(0, 0., 4.e4);
-  fit_kaonneg.SetParLimits(1, 0.05, 0.3);
-  fit_kaonneg.SetParLimits(2, 0., 1.7);
+  fit_kaonneg.SetParLimits(1, 0.21, 0.25);
+  fit_kaonneg.SetParLimits(2, 0.02, .16);
   TF1 kaonneg_0("kaonneg_0", "0", xmin, xmax);
-  TF1 kaonneg_1("kaonneg_1", "pol11", xmin, xmax);
-  TF1 kaonneg_2("kaonneg_2", "pol8", xmin, xmax);
+  TF1 kaonneg_1("kaonneg_1", "pol2", xmin, xmax);
+  TF1 kaonneg_2("kaonneg_2", "pol2", xmin, xmax);
 
   Pid::ParticleFit kaonneg(PidParticles::kKaonNeg);
   kaonneg.SetParametrization({kaonneg_0, kaonneg_1, kaonneg_2});
@@ -315,7 +315,7 @@ void run_pid() {
 
   std::cout << "\n\nallneg\n";
   xmin = -12, xmax = -0.25, ymin = -2., ymax = 6.;
-  std::unique_ptr<TH2D> hneg{(TH2D*) fIn->Get("reco_info/h2TofM2")};
+  std::shared_ptr<TH2D> hneg{(TH2D*) fIn->Get("reco_info/h2TofM2")};
   hneg->Rebin2D(10, 1);
   tof.SetChi2Max(1e6);
   pionneg.SetIsFixed({false, true, true});
@@ -336,12 +336,12 @@ void run_pid() {
 
   tof.Clear();
 
-  std::unique_ptr<TFile> outfile{TFile::Open("pid_getter.root", "recreate")};
+  std::shared_ptr<TFile> outfile{TFile::Open("pid_getter.root", "recreate")};
   getter.Write("pid_getter");
   outfile->Close();
 }
 
 int main(int argc, char** argv) {
-  run_pid();
+  run_pid_dcm3();
   return 0;
 }
