@@ -5,12 +5,6 @@ set(CMAKE_cpp_STANDARD 11)
 set(PROJECT_VERSION 1.0)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
-#
-# Options
-#
-set(PID_BUNDLED_AT OFF CACHE BOOL "Get and build AnalysisTree")
-set(PID_BUNDLED_AT_VERSION "v2.2.7" CACHE STRING "Bundled AnalysisTree version")
-set(PID_BUNDLED_AT_GIT_SHALLOW ON CACHE BOOL "Use CMake GIT_SHALLOW option")
 
 # Telling CMake where to find the ROOT installation.
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
@@ -48,9 +42,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ftree-vectorize -ffast-math -DNODEBUG")
 message(STATUS "Using CXX flags for ${CMAKE_BUILD_TYPE}: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
 
 add_subdirectory(src)
-if(${PID_BUNDLED_AT})
-    add_subdirectory(at_interface)
-endif()
 add_subdirectory(tasks)
 
  # Packaging routine
