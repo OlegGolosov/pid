@@ -1,5 +1,6 @@
 #include "Parameters.h"
 
+#include "TAxis.h"
 #include "TFile.h"
 #include "TGraphErrors.h"
 
@@ -32,29 +33,37 @@ void Parameters::Parametrize(std::vector<ParticleFit>& particles) {
         dy.push_back(par_err);
       }
 
-      TF1& fit = particles.at(ipart).GetParametrizationFunction(ivar);
+      TF1& fit = particles.at(ipart).GetOutputParametrizationFunction(ivar);
       auto* par = new TGraphErrors(params_.size(), &(x_[0]), &(y[0]), nullptr, &(dy[0]));
       par->SetName(fit.GetName());
       par->SetTitle(Form("%s;p (GeV/#it{c});%s", fit.GetName(), fit.GetName()));
 
-      if (strcmp(fit.GetTitle(), "0") == 0) {
+      if (fit.GetFormula() && !*fit.GetTitle()) // table function if empty formula
+      {
         std::function<double(const double*, const double*)> fitFunc = [=](const double* x, const double*) { return par->Eval(x[0]); };
         TF1 false_fit(fit.GetName(), fitFunc, fit.GetXmin(), fit.GetXmax(), 0);
         false_fit.SetNpx(par->GetN() * 5);
         false_fit.SetTitle("0");
-        particles.at(ipart).SetParametrizationFunction(ivar, false_fit);
+        particles.at(ipart).SetOutputParametrizationFunction(ivar, false_fit);
         par->GetListOfFunctions()->Add(false_fit.Clone());
-      } else {
-        if (particles.size() > 1) {
-          float pmin, pmax;
-          particles.at(ipart).GetRange(pmin, pmax);
-          par->Fit(&fit, "Q,M", "", pmin, pmax);
-        } else
-          par->Fit(&fit, "Q,M,R");
+      } 
+      else if (fit.GetNpar()==0) // use function itself if it has no parameters
+      {
+        par->GetListOfFunctions()->Add(&fit);
+      }
+      else
+      {
+        auto fitLimits=particles.at(ipart).GetParFitLimits(ivar);
+        par->Fit(&fit, particles.at(ipart).GetParFitOption(ivar).c_str(), "", fitLimits.at(0), fitLimits.at(1));
+        auto fullRange=(TF1*)par->GetListOfFunctions()->At(0)->Clone(Form("%s_fullRange", fit.GetName()));
+        fullRange->SetRange(par->GetXaxis()->GetXmin(), par->GetXaxis()->GetXmax());
+        fullRange->SetLineStyle(7);
+        par->GetListOfFunctions()->Add(fullRange);
       }
       par->Write();
       graphs.push_back(*par);
     }
+    particles.at(ipart).SetInputParametrization(particles.at(ipart).GetOutputParametrization());
   }
 }
 

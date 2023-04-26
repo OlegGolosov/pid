@@ -13,8 +13,11 @@
 
 #include "Constants.h"
 #include "TF1.h"
+#include "TCutG.h"
 
 namespace Pid {
+
+using std::string, std::vector, std::cout, std::endl;
 
 class ParticleFit {
  public:
@@ -23,43 +26,90 @@ class ParticleFit {
   explicit ParticleFit(int type) : particle_type_(type){};
   virtual ~ParticleFit() = default;
 
-  [[nodiscard]] std::vector<double> GetFunctionParams(float p) const;
+  [[nodiscard]] std::vector<double> GetInputFunctionParams(float x) const;
+  [[nodiscard]] std::vector<double> GetOutputFunctionParams(float x) const;
   double Eval(double p, double m2);
 
-  void SetParametrization(const std::vector<TF1>& parametrization) { parametrization_ = parametrization; }
-  void SetParametrizationFunction(uint ivar, const TF1& func) { parametrization_.at(ivar) = func; }
   void SetFitFunction(const TF1& function) { function_ = function; }
-  void SetRange(float min, float max) { minx_ = min, maxx_ = max; }
-  void SetIsFitted(bool is = true) { isfitted_ = is; }
-  void SetIsFixed(const std::vector<bool>& is) { isfixed_ = is; }
+  void SetRangeX(float min, float max) { minx_ = min, maxx_ = max; }
+  void SetRangeY(float min, float max) { miny_ = min, maxy_ = max; }
+  void SetInputParametrizationFunction(uint ivar, const TF1& func) { inputParametrization_.at(ivar) = func; }
+  void SetOutputParametrizationFunction(uint ivar, const TF1& func) { outputParametrization_.at(ivar) = func; }
+  void SetInputParametrization(const std::vector<TF1>& parametrization) { 
+    if (parametrization.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter functions is not equal to the number of input parameters!\nExiting...\n";
+      exit(0);
+    }
+    inputParametrization_ = parametrization; 
+  }
+  
+  void SetOutputParametrization(const std::vector<TF1>& parametrization) { 
+    if (parametrization.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter functions is not equal to the number of output parameters!\nExiting...\n";
+      exit(0);
+    }
+    outputParametrization_ = parametrization; 
+  }
+
+  void SetParVariation(const std::vector<std::vector<double>> parVariation) {
+    if (parVariation.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter variations is not equal to the number of output parameters!\nExiting...\n";
+      exit(0);
+    }
+    parVariation_ = parVariation; 
+  }
+
+  void SetParFitOptions(const std::vector<string> parFitOptions)
+  {
+    if (parFitOptions.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter fit options is not equal to the number of output parameters!\nExiting...\n";
+      exit(0);
+    }
+    parFitOptions_=parFitOptions;
+  }
+
+  void SetParFitLimits(const std::vector<std::vector<double>> parFitLimits) 
+  {
+    if (parFitLimits.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter fit limits is not equal to the number of output parameters!\nExiting...\n";
+      exit(0);
+    }
+    parFitLimits_ = parFitLimits; 
+  }
 
   [[nodiscard]] const TF1& GetFunction() const { return function_; }
   [[nodiscard]] uint GetNpar() const { return function_.GetNpar(); }
-  TF1& GetParametrizationFunction(int ipar) { return parametrization_.at(ipar); }
-  [[nodiscard]] bool GetIsFixed(uint ipar) const {
-    if (ipar >= isfixed_.size())
-      return false;
-    return isfixed_.at(ipar);
-  }
+  TF1& GetInputParametrizationFunction(int ipar) { return inputParametrization_.at(ipar); }
+  TF1& GetOutputParametrizationFunction(int ipar) { return outputParametrization_.at(ipar); }
+  vector<TF1> GetOutputParametrization() { return outputParametrization_; }
+  [[nodiscard]] std::vector<double> GetParVariation(uint ipar) const {return parVariation_.at(ipar);}
+  [[nodiscard]] std::vector<double> GetParFitLimits(uint ipar) const {return parFitLimits_.at(ipar);}
+  [[nodiscard]] string GetParFitOption(uint ipar) const {return parFitOptions_.at(ipar);}
 
-  [[nodiscard]] double GetSigma(float p) const { return parametrization_.at(PidFunction::kSigma).Eval(p); }
-  [[nodiscard]] double GetMean(float p) const { return parametrization_.at(PidFunction::kMean).Eval(p); }
-  [[nodiscard]] double GetIntegral(float p) const { return parametrization_.at(PidFunction::kA).Eval(p) / sqrt(2 * TMath::Pi() / GetSigma(p)); }
+  [[nodiscard]] double GetSigma(float p) const { return inputParametrization_.at(PidFunction::kSigma).Eval(p); }
+  [[nodiscard]] double GetMean(float p) const { return inputParametrization_.at(PidFunction::kMean).Eval(p); }
+  [[nodiscard]] double GetIntegral(float p) const { return inputParametrization_.at(PidFunction::kA).Eval(p) / sqrt(2 * TMath::Pi() / GetSigma(p)); }
 
-  void GetRange(float& min, float& max) const { min = minx_, max = maxx_; }
+  [[nodiscard]] double GetXmin() const { return minx_; }
+  [[nodiscard]] double GetXmax() const { return maxx_; }
+  [[nodiscard]] double GetYmin() const { return miny_; }
+  [[nodiscard]] double GetYmax() const { return maxy_; }
 
  private:
   TF1 function_;
-  std::vector<TF1> parametrization_{};
-  std::vector<bool> isfixed_{};
+  std::vector<TF1> inputParametrization_{};
+  std::vector<TF1> outputParametrization_{};
+  std::vector<std::vector<double>> parVariation_{};
+  std::vector<std::vector<double>> parFitLimits_{};
 
   float minx_{-1.};
   float maxx_{-1.};
+  float miny_{-1.};
+  float maxy_{-1.};
 
   int npoints_{-1};
   int particle_type_{-1};
-
-  bool isfitted_{false};
+  vector<string> parFitOptions_;
 
   ClassDef(ParticleFit, 2);
 };
