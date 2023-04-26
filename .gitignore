@@ -1,3 +1,5 @@
 Doxygen/*
 *build*/*
 *install*/*
+*.swp
+macro/*.root

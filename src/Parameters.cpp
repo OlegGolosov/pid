@@ -45,12 +45,8 @@ void Parameters::Parametrize(std::vector<ParticleFit>& particles) {
         particles.at(ipart).SetParametrizationFunction(ivar, false_fit);
         par->GetListOfFunctions()->Add(false_fit.Clone());
       } else {
-        if (particles.size() > 1) {
-          float pmin, pmax;
-          particles.at(ipart).GetRange(pmin, pmax);
-          par->Fit(&fit, "Q,M", "", pmin, pmax);
-        } else
-          par->Fit(&fit, "Q,M,R");
+          auto fitLimits=particles.at(ipart).GetParFitLimits(ivar);
+          par->Fit(&fit, "Q,M", "", fitLimits.at(0), fitLimits.at(1));
       }
       par->Write();
       graphs.push_back(*par);

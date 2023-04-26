@@ -42,7 +42,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ftree-vectorize -ffast-math -DNODEBUG")
 message(STATUS "Using CXX flags for ${CMAKE_BUILD_TYPE}: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
 
 add_subdirectory(src)
-add_subdirectory(tasks)
 
  # Packaging routine
 # For complete explanation
