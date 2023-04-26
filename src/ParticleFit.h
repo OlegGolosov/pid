@@ -24,11 +24,11 @@ class ParticleFit {
   explicit ParticleFit(int type) : particle_type_(type){};
   virtual ~ParticleFit() = default;
 
-  [[nodiscard]] std::vector<double> GetFunctionParams(float p) const;
-  double Eval(double p, double m2);
+  [[nodiscard]] std::vector<double> GetFunctionParams(vector<double> x) const;
+  double Eval(vector<double> p, double y);
 
   void SetFitFunction(const TF1& function) { function_ = function; }
-  void SetRangeX(float min, float max) { minx_ = min, maxx_ = max; }
+  void SetRangeX(vector<float> min, vector<float> max) { minx_ = min, maxx_ = max; }
   void SetRangeY(float min, float max) { miny_ = min, maxy_ = max; }
   void SetParametrizationFunction(uint ivar, const TF1& func) { parametrization_.at(ivar) = func; }
   void SetParametrization(const std::vector<TF1>& parametrization) { 

@@ -12,82 +12,92 @@
 #include <vector>
 
 #include "TH1.h"
-#include "TH2.h"
+#include "THn.h"
 #include "TString.h"
 
 #include "ParticleFit.h"
+using std::vector, std::cout, std::endl, std::sort;
 
 namespace Pid {
 
 class Fitter {
 
  public:
-  //     Fitter( std::vector <ParticleFit> &&particles ) : particles_(particles) {};
+  //     Fitter( vector <ParticleFit> &&particles ) : particles_(particles) {};
   Fitter() = default;
   ;
 
   void Fit();
-  TF1* ConstructFit1DFunction(double p);
-  double Fit1D(TH1* h, std::vector<double>& par, std::vector<double>& par_err, double p);
+  TF1* ConstructFit1DFunction(vector<double> x);
+  double Fit1D(TH1* h, vector<double>& par, vector<double>& par_err, vector<double> x);
   void Clear();
 
   void AddParticle(const ParticleFit& particle, uint id) {
     particles_.push_back(particle);
     particles_id_.push_back(id);
   }
-  void SetHisto2D(TH2* histo2D) { histo2D_ = histo2D; }
-  void SetRangeX(double min, double max) { minx_ = min, maxx_ = max; }
+  void SetHistoND(THn* histoND) { histoND_ = histoND; }
+  void SetRangeX(vector<vector<double>> rangex) { rangex_ = rangex; }
   void SetRangeY(double min, double max) { miny_ = min, maxy_ = max; }
-  void SetRange(TCutG *cut) 
+  void SetRange(vector<TCutG*> cuts) 
   { 
-    range_=cut;
-    auto x=cut->GetX();
-    minx_=maxx_=x[0];
-    for(int i=1;i<cut->GetN();i++)
+    ranges_=cuts;
+    rangex_.resize(cuts.size());
+    for(int i=0;i<cuts.size();i++)
     {
-      if(maxx_<x[i]) maxx_=x[i];
-      if(minx_>x[i]) minx_=x[i];
-    }
-    std::cout << minx_ << "\t" << maxx_ << std::endl;
-  }
-  void SetOutputFileName(TString name) { outfilename_ = std::move(name); }
-
-  void GetRangeY(double x)
-  {
-    if(!range_) return;
-    auto n=range_->GetN();
-    auto xx=range_->GetX(), yy=range_->GetY();
-    miny_=1e10, maxy_=-1e10;
-    for (int i=0;i<n;i++)
-    {
-      int next=(i<n-1)?(i+1):0;
-      if((x>xx[i] && x<xx[next]) || (x<xx[i] && x>xx[next]))
+      auto x=cuts.at(i)->GetX();
+      float min=x[0], max=x[0];
+      for(int j=1;j<cuts.at(i)->GetN();j++)
       {
-        auto y=yy[i]+(yy[next]-yy[i])/(xx[next]-xx[i])*(x-xx[i]);
-        if(y<miny_) miny_=y;
-        if(y>maxy_) maxy_=y;
+        if(max<x[j]) max=x[j];
+        if(min>x[j]) min=x[j];
+      }
+      rangex_.at(i).at(0)=min; 
+      rangex_.at(i).at(1)=max;
+    }
+  }
+  void SetOutputFileName(TString name) { outfilename_ = move(name); }
+
+  void GetRangeY(vector<double> x)
+  {
+    if(range_.size()==0) return;
+    vector<float> extry;
+    for(int i=0;i<range_.size();i++)
+    {
+      auto n=range_.at(i)->GetN();
+      auto xx=range_.at(i)->GetX(), yy=range_.at(i)->GetY();
+      for (int j=0;j<n;j++)
+      {
+        int next=(j<n-1)?(j+1):0;
+        if((x>xx[j] && x<xx[next]) || (x<xx[j] && x>xx[next]))
+        {
+          auto y=yy[j]+(yy[next]-yy[j])/(xx[next]-xx[j])*(x-xx[j]);
+          extry.push_back(y);
+        }
       }
     }
+    sort(extry.begin(), extry.end());
+    miny_=extry_.at(0.5*extry.size()-1);
+    maxy_=extry_.at(0.5*extry.size());
   }
 
   ParticleFit GetParticle(uint i) const { return particles_.at(i); };
   ParticleFit GetParticleSpecie(uint i) const {
-    return particles_.at(std::find(particles_id_.begin(), particles_id_.end(), i) - particles_id_.begin());
+    return particles_.at(find(particles_id_.begin(), particles_id_.end(), i) - particles_id_.begin());
   };
 
   void SetChi2Max(double chi2) { chi2_max_ = chi2; }
 
  private:
-  std::vector<ParticleFit> particles_;
-  std::vector<uint> particles_id_;
-  TH2* histo2D_{nullptr};
+  vector<ParticleFit> particles_;
+  vector<uint> particles_id_;
+  THn* histoND_{nullptr};
 
   TString outfilename_{"out.root"};
 
-  TCutG *range_{nullptr};
+  vector<TCutG*> range_{nullptr};
 
-  double minx_{-1.};
-  double maxx_{-1.};
+  vector <vector<double>> rangex_;
 
   double miny_{-1.};
   double maxy_{-1.};

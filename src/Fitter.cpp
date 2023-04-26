@@ -14,29 +14,29 @@ namespace Pid {
 * Main function. Fitting TH2D bin-by-bin
 */
 void Fitter::Fit() {
-  const uint firstbin = histo2D_->GetXaxis()->FindBin(minx_);
-  const uint lastbin = histo2D_->GetXaxis()->FindBin(maxx_);
+  const uint firstbin = histoND_->GetXaxis()->FindBin(minx_);
+  const uint lastbin = histoND_->GetXaxis()->FindBin(maxx_);
 
-  std::vector<std::vector<double>> params;
-  std::vector<std::vector<double>> params_errors;
-  std::vector<double> x;
-  std::vector<double> chi2_x;
-  std::vector<double> chi2_y;
+  vector<vector<double>> params;
+  vector<vector<double>> params_errors;
+  vector<double> x;
+  vector<double> chi2_x;
+  vector<double> chi2_y;
 
   TFile f(outfilename_, "recreate");
 
   for (uint ibin = firstbin; ibin < lastbin; ++ibin) {
-    auto h1fit=histo2D_->ProjectionY(Form("py_%d", ibin), ibin, ibin);
+    auto h1fit=histoND_->ProjectionY(Form("py_%d", ibin), ibin, ibin);
 
-    std::vector<double> par;
-    std::vector<double> par_err;
+    vector<double> par;
+    vector<double> par_err;
 
-    const float mom = histo2D_->GetXaxis()->GetBinCenter(ibin);
+    const float mom = histoND_->GetXaxis()->GetBinCenter(ibin);
     float chi2 = Fit1D(h1fit, par, par_err, mom);
 
-    std::cout << mom << "  " << chi2 << "\t";
-    for (auto &p:par) std::cout << p << "\t";
-    std::cout << std::endl;
+    cout << mom << "  " << chi2 << "\t";
+    for (auto &p:par) cout << p << "\t";
+    cout << endl;
 
     if (isnan(chi2) || isinf(chi2)) chi2 = -1.;
 
@@ -51,7 +51,7 @@ void Fitter::Fit() {
   }
 
   Parameters p;
-  p.SetParams(std::move(x), std::move(params), std::move(params_errors));
+  p.SetParams(move(x), move(params), move(params_errors));
   //     p.SetParticles();
   TGraph chi2(chi2_x.size(), &(chi2_x[0]), &(chi2_y[0]));
   chi2.SetName("chi2");
@@ -70,15 +70,18 @@ void Fitter::Fit() {
 * @param p track momentum
 * @return chi2/NDF of the fit
 */
-double Fitter::Fit1D(TH1 *h, std::vector<double>& par, std::vector<double>& par_err, double x) {
-  auto f = ConstructFit1DFunction(x);
+double Fitter::Fit1D(TH1 *h, vector<double>& par, vector<double>& par_err, vector<double> x) {
+  auto f = ConstructFit1DFunction(vector<double> x);
 
   GetRangeY(x);
   h->Fit(f, "Q,M", "", miny_, maxy_);
 
-  par = std::vector<double>(f->GetParameters(), f->GetParameters() + f->GetNpar());
-  par_err = std::vector<double>(f->GetParErrors(), f->GetParErrors() + f->GetNpar());
-  h->Write(Form("h_%f", x));
+  par = vector<double>(f->GetParameters(), f->GetParameters() + f->GetNpar());
+  par_err = vector<double>(f->GetParErrors(), f->GetParErrors() + f->GetNpar());
+  string name="h";
+  for (auto &val:x)
+    name+=Form("_%.2f", val);
+  h->Write(name.c_str());
 
   return f->GetChisquare() / f->GetNDF();
 }
@@ -88,16 +91,16 @@ double Fitter::Fit1D(TH1 *h, std::vector<double>& par, std::vector<double>& par_
 * @param p track momentum
 * @return pointer to TF1 function
 */
-TF1* Fitter::ConstructFit1DFunction(double x) {
+TF1* Fitter::ConstructFit1DFunction(vector<double> x) {
   TString sumname{""};
-  std::vector<double> par{};
+  vector<double> par{};
 
   uint iparticle{0};
   float miny=particles_.at(0).GetYmin(), maxy=particles_.at(0).GetYmax();
   for (auto const& particle : particles_) {
     const TString name = particle.GetFunction().GetName();
     iparticle == 0 ? sumname = name : sumname += "+" + name;
-    std::vector<double> par_i = particle.GetFunctionParams(x);
+    vector<double> par_i = particle.GetFunctionParams(x);
     par.insert(par.end(), par_i.begin(), par_i.end());
     double minyTemp=particle.GetYmin();
     double maxyTemp=particle.GetYmax();
@@ -117,23 +120,25 @@ TF1* Fitter::ConstructFit1DFunction(double x) {
   f->SetParameters(&par[0]);
   uint iparam_all{0};
   for (auto const& particle : particles_) {
-    float xmin=particle.GetXmin(), xmax=particle.GetXmax();
+    auto xmin=particle.GetXmin(), xmax=particle.GetXmax();
     bool notInRange = false;
-    if (x < xmin || x > xmax) notInRange = true;
+    for(int i=0;i<xmin.size();i++)
+      if (x.at(i) < xmin.at(i) || x.at(i) > xmax.at(i)) 
+        notInRange = true;
     for (uint iparam = 0; iparam < particle.GetNpar(); ++iparam, ++iparam_all) {
       if (notInRange) {
         f->FixParameter(iparam_all, 0.);
         continue;
       }
-      std::vector<double> parVariation=particle.GetParVariation(iparam);
+      vector<double> parVariation=particle.GetParVariation(iparam);
       f->SetParLimits(iparam_all, par.at(iparam_all)-parVariation.at(0), par.at(iparam_all)+parVariation.at(1));
     }
   }
-  //std::cout << sumname << std::endl;
-  //std::cout << f->GetName() << " " << f->GetExpFormula() << std::endl;
+  //cout << sumname << endl;
+  //cout << f->GetName() << " " << f->GetExpFormula() << endl;
   //for (auto ipar : par)
-  //    std::cout << ipar << " ";
-  //std::cout << std::endl;
+  //    cout << ipar << " ";
+  //cout << endl;
 
   return f;
 }
@@ -143,7 +148,7 @@ TF1* Fitter::ConstructFit1DFunction(double x) {
 void Fitter::Clear() {
   particles_.clear();
   particles_id_.clear();
-  histo2D_=nullptr;
+  histoND_=nullptr;
   minx_ = -1.;
   maxx_ = -1.;
   miny_ = -1.;
