@@ -77,12 +77,22 @@ class ParticleFit {
     parFitLimits_ = parFitLimits; 
   }
 
+  void SetParLimits(const std::vector<std::vector<double>> parLimits) 
+  {
+    if (parLimits.size() != GetNpar()) {
+      std::cout << "\n\nNumber of parameter limits is not equal to the number of output parameters!\nExiting...\n";
+      exit(0);
+    }
+    parLimits_ = parLimits; 
+  }
+
   [[nodiscard]] const TF1& GetFunction() const { return function_; }
   [[nodiscard]] uint GetNpar() const { return function_.GetNpar(); }
   TF1& GetInputParametrizationFunction(int ipar) { return inputParametrization_.at(ipar); }
   TF1& GetOutputParametrizationFunction(int ipar) { return outputParametrization_.at(ipar); }
   vector<TF1> GetOutputParametrization() { return outputParametrization_; }
   [[nodiscard]] std::vector<double> GetParVariation(uint ipar) const {return parVariation_.at(ipar);}
+  [[nodiscard]] std::vector<double> GetParLimits(uint ipar) const {return parLimits_.at(ipar);}
   [[nodiscard]] std::vector<double> GetParFitLimits(uint ipar) const {return parFitLimits_.at(ipar);}
   [[nodiscard]] string GetParFitOption(uint ipar) const {return parFitOptions_.at(ipar);}
 
@@ -101,6 +111,7 @@ class ParticleFit {
   std::vector<TF1> outputParametrization_{};
   std::vector<std::vector<double>> parVariation_{};
   std::vector<std::vector<double>> parFitLimits_{};
+  std::vector<std::vector<double>> parLimits_{};
 
   float minx_{-1.};
   float maxx_{-1.};

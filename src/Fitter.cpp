@@ -27,12 +27,15 @@ void Fitter::Fit() {
   TFile f(outfilename_.c_str(), "recreate");
 
   for (uint ibin = firstbin; ibin <= lastbin; ++ibin) {
-    float xLeft=xAxis->GetBinLowEdge(ibin), xRight=xAxis->GetBinUpEdge(ibin); 
+    float xLeft=xAxis->GetBinLowEdge(ibin), xRight=xAxis->GetBinUpEdge(ibin);
+    float integral=histo2D_->Integral(ibin, ibin, 0, -1,"width"), xMean=xAxis->GetBinCenter(ibin)*integral; 
     auto h1fit=histo2D_->ProjectionY(Form("h_%.2f_%.2f", xLeft, xRight), ibin, ibin);
     int nBins=0;
     while (h1fit->GetEntries() < minBinEntries_ && ibin+nBins<lastbin)
     {
       nBins++;
+      xMean+=xAxis->GetBinCenter(ibin+nBins)*histo2D_->Integral(ibin+nBins, ibin+nBins, 0, -1, "width");
+      integral+=histo2D_->Integral(ibin+nBins, ibin+nBins, 0, -1, "width");
       xRight=xAxis->GetBinUpEdge(ibin+nBins);
       h1fit=histo2D_->ProjectionY(Form("h_%.2f_%.2f", xLeft, xRight), ibin, ibin+nBins);
     }
@@ -40,24 +43,25 @@ void Fitter::Fit() {
     vector<double> par;
     vector<double> par_err;
 
-    const float xCenter = 0.5*(xLeft+xRight);
-    float chi2 = Fit1D(h1fit, par, par_err, xCenter);
+    xMean/=integral;
+    //xMean=0.5*(xLeft+xRight);
+    float chi2 = Fit1D(h1fit, par, par_err, xMean);
 
-    cout << xCenter << "  " << chi2 << "\t";
+    cout << xMean << "  " << chi2 << "\t";
     for (auto &p:par) cout << p << "\t";
     cout << endl;
 
     if (isnan(chi2) || isinf(chi2)) chi2 = -1.;
 
-    chi2_x.push_back(xCenter);
+    chi2_x.push_back(xMean);
     chi2_y.push_back(chi2);
 
     ibin+=nBins;
-    if (chi2 < 0. || chi2 > chi2_max_ || isExcluded(xCenter)) continue;
+    if (chi2 < 0. || chi2 > chi2_max_ || isExcluded(xMean)) continue;
 
     params.push_back(par);
     params_errors.push_back(par_err);
-    x.push_back(xCenter);
+    x.push_back(xMean);
   }
 
   Parameters p;
@@ -85,6 +89,10 @@ double Fitter::Fit1D(TH1 *h, vector<double>& par, vector<double>& par_err, doubl
 
   GetRangeY(x);
   h->Fit(f, fitOption_.c_str(), "", miny_, maxy_);
+  auto fullRange=(TF1*)h->GetListOfFunctions()->At(0)->Clone(Form("%s_fullRange", f->GetName()));
+  fullRange->SetRange(h->GetXaxis()->GetXmin(), h->GetXaxis()->GetXmax());
+  fullRange->SetLineStyle(7);
+  h->GetListOfFunctions()->Add(fullRange);
 
   par = vector<double>(f->GetParameters(), f->GetParameters() + f->GetNpar());
   par_err = vector<double>(f->GetParErrors(), f->GetParErrors() + f->GetNpar());
@@ -165,7 +173,15 @@ TF1* Fitter::ConstructFit1DFunction(double x) {
         continue;
       }
       vector<double> parVariation=particle.GetParVariation(iparam);
-      f->SetParLimits(iparam_all, par.at(iparam_all)-parVariation.at(0), par.at(iparam_all)+parVariation.at(1));
+      vector<double> parLimits=particle.GetParLimits(iparam);
+      auto parMin=par.at(iparam_all)*(1-parVariation.at(0));
+      auto parMax=par.at(iparam_all)*(1+parVariation.at(1));
+      if (parMin<parLimits.at(0)) parMin=parLimits.at(0);
+      if (parMin>parLimits.at(1)) parMin=parLimits.at(1);
+      if (parMax>parLimits.at(1)) parMax=parLimits.at(1);
+      if (parMax<parLimits.at(0)) parMax=parLimits.at(0);
+//      cout << iparam_all << ": min=" << parMin << " max=" << parMax << endl;
+      f->SetParLimits(iparam_all, parMin, parMax);
     }
   }
 //  cout << sumname << endl;
@@ -187,6 +203,7 @@ void Fitter::Clear() {
   maxx_ = -1.;
   miny_ = -1.;
   maxy_ = -1.;
+  range_=nullptr;
   chi2_max_ = 100.;
   outfilename_ = "out.root";
 }

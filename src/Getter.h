@@ -39,7 +39,7 @@ class BaseGetter {
  */
 class Getter : public TObject, public BaseGetter {
  public:
-  void AddParticle(const ParticleFit& particle, uint id) { species_[id] = particle; }
+  void AddParticle(const ParticleFit& particle, int id) { species_[id] = particle; }
   void AddParticles(std::map<int, ParticleFit>&& species) { species_ = species; }
 
   std::map<int, double> GetBayesianProbability(double p, double m2);

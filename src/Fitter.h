@@ -33,7 +33,7 @@ class Fitter {
   double Fit1D(TH1* h, vector<double>& par, vector<double>& par_err, double p);
   void Clear();
 
-  void AddParticle(const ParticleFit& particle, uint id) {
+  void AddParticle(const ParticleFit& particle, int id) {
     ulong pos=find(particles_id_.begin(), particles_id_.end(), id) - particles_id_.begin();
     if(pos == particles_id_.size())
     {
@@ -100,7 +100,7 @@ class Fitter {
 
  private:
   vector<ParticleFit> particles_;
-  vector<uint> particles_id_;
+  vector<int> particles_id_;
   TH2* histo2D_{nullptr};
 
   string outfilename_{"out.root"};
