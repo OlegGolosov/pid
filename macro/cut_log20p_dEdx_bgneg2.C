@@ -1,7 +1,7 @@
 TCutG* get_cut_log20p_dEdx_bgneg2()
 {
-   vector<double> x{4.0, 5.0, 6.0, 10., 10., 6.0,  5.0, 4.0};
-   vector<double> y{0.5, 0.5, 0.5, 0.5, 1.1, 1.1,  1.2, 1.0};
+   vector<double> x{4.0, 5.0, 6.0, 10., 10., 6.0,  5.0, 4.0, 4.0};
+   vector<double> y{0.5, 0.5, 0.5, 0.5, 1.1, 1.1,  1.2, 1.0, 0.5};
    const char* name="cut_log20p_dEdx_bgneg2";
    auto cutg = new TCutG(name, x.size(), &x[0], &y[0]);
    cutg->SetVarX("trLog20p");

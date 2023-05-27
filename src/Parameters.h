@@ -20,9 +20,9 @@ class Parameters {
 
   void Parametrize(std::vector<ParticleFit>& particles);
 
-  void SetParams(std::vector<double>&& x,
-                 std::vector<std::vector<double>>&& params,
-                 std::vector<std::vector<double>>&& params_errors) {
+  void SetParams(std::vector<double>& x,
+                 std::vector<std::vector<double>>& params,
+                 std::vector<std::vector<double>>& params_errors) {
     params_ = params;
     params_errors_ = params_errors;
     x_ = x;

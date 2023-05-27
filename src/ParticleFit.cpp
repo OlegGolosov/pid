@@ -42,7 +42,7 @@ ClassImp(Pid::ParticleFit)
     if (x > maxx_ || x < minx_) return 0.;
 
     const uint npar = function_.GetNpar();
-    if (inputParametrization_.size() != npar)
+    if (outputParametrization_.size() != npar)
       exit(1);
 
     function_.SetParameters(&(GetOutputFunctionParams(x)[0]));

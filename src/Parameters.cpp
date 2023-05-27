@@ -27,8 +27,6 @@ void Parameters::Parametrize(std::vector<ParticleFit>& particles) {
       for (uint ibin = 0; ibin < params_.size(); ++ibin) {
         const double par = params_.at(ibin).at(nvar * ipart + ivar);
         const double par_err = params_errors_.at(ibin).at(nvar * ipart + ivar);
-
-        //              std::cout << par << " " <<  par_err << " " << std::endl;
         y.push_back(par);
         dy.push_back(par_err);
       }
@@ -37,13 +35,15 @@ void Parameters::Parametrize(std::vector<ParticleFit>& particles) {
       auto* par = new TGraphErrors(params_.size(), &(x_[0]), &(y[0]), nullptr, &(dy[0]));
       par->SetName(fit.GetName());
       par->SetTitle(Form("%s;p (GeV/#it{c});%s", fit.GetName(), fit.GetName()));
+      auto inputPar = (TF1*)particles.at(ipart).GetInputParametrizationFunction(ivar).Clone();
+      inputPar->SetLineColor(kBlue);
 
-      if (fit.GetFormula() && !*fit.GetTitle()) // table function if empty formula
+      if (!*fit.GetTitle()) // table function if empty title
       {
         std::function<double(const double*, const double*)> fitFunc = [=](const double* x, const double*) { return par->Eval(x[0]); };
         TF1 false_fit(fit.GetName(), fitFunc, fit.GetXmin(), fit.GetXmax(), 0);
-        false_fit.SetNpx(par->GetN() * 5);
-        false_fit.SetTitle("0");
+        false_fit.SetNpx(par->GetN()*5);
+        false_fit.SetTitle("");
         particles.at(ipart).SetOutputParametrizationFunction(ivar, false_fit);
         par->GetListOfFunctions()->Add(false_fit.Clone());
       } 
@@ -60,6 +60,7 @@ void Parameters::Parametrize(std::vector<ParticleFit>& particles) {
         fullRange->SetLineStyle(7);
         par->GetListOfFunctions()->Add(fullRange);
       }
+      par->GetListOfFunctions()->Add(inputPar);
       par->Write();
       graphs.push_back(*par);
     }

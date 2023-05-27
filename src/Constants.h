@@ -13,6 +13,8 @@ namespace PidParticles {
 enum eParticle {
   kBgPos = 1,
   kBgNeg = -1,
+  kEPos = 11,
+  kENeg = -11,
   kProton = 2212,
   kAntiProton = -2212,
   kPionPos = 211,
@@ -28,6 +30,8 @@ const std::unordered_map<int, float> masses =
     {
         {kBgPos, 0.},
         {kBgNeg, 0.},
+        {kEPos, 0.000511},
+        {kENeg, 0.000511},
         {kProton, 0.938},
         {kAntiProton, 0.938},
         {kPionPos, 0.140},

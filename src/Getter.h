@@ -45,8 +45,8 @@ class Getter : public TObject, public BaseGetter {
   std::map<int, double> GetBayesianProbability(double p, double m2);
   void SetRange(double min, double max) { minx_ = min, maxx_ = max; }
 
-  std::map<uint, double> GetSigma(double p, double m2) {
-    std::map<uint, double> sigma{};
+  std::map<int, double> GetSigma(double p, double m2) {
+    std::map<int, double> sigma{};
 
     if (p > maxx_ || p < minx_)
       return sigma;

@@ -46,6 +46,10 @@ class Fitter {
     particles_id_.at(pos)=id;
   }
 
+  void AddParticle(const ParticleFit& particle) {
+    AddParticle(particle, particle.GetType());
+  }
+
   void SetHisto2D(TH2* histo2D) { histo2D_ = histo2D; }
   void SetMinBinEntries(int n) { minBinEntries_ = n; }
   void SetRangeX(double min, double max) { minx_ = min, maxx_ = max; }
@@ -91,8 +95,8 @@ class Fitter {
     }
   }
 
-  ParticleFit GetParticle(uint i) const { return particles_.at(i); };
-  ParticleFit GetParticleSpecie(uint i) const {
+  ParticleFit GetParticle(uint i) { return particles_.at(i); };
+  ParticleFit GetParticleSpecie(int i) {
     return particles_.at(find(particles_id_.begin(), particles_id_.end(), i) - particles_id_.begin());
   };
 

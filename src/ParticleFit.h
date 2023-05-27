@@ -86,6 +86,8 @@ class ParticleFit {
     parLimits_ = parLimits; 
   }
 
+  void SetType(int type){ particle_type_=type; }
+
   [[nodiscard]] const TF1& GetFunction() const { return function_; }
   [[nodiscard]] uint GetNpar() const { return function_.GetNpar(); }
   TF1& GetInputParametrizationFunction(int ipar) { return inputParametrization_.at(ipar); }
@@ -104,6 +106,7 @@ class ParticleFit {
   [[nodiscard]] double GetXmax() const { return maxx_; }
   [[nodiscard]] double GetYmin() const { return miny_; }
   [[nodiscard]] double GetYmax() const { return maxy_; }
+  [[nodiscard]] int GetType() const { return particle_type_; }
 
  private:
   TF1 function_;

@@ -4,6 +4,7 @@
 #include "TFile.h"
 #include "TGraphErrors.h"
 #include "TMath.h"
+#include "TPad.h"
 
 #include "Parameters.h"
 
@@ -25,6 +26,18 @@ void Fitter::Fit() {
   vector<double> chi2_y;
 
   TFile f(outfilename_.c_str(), "recreate");
+
+  histo2D_->Draw("colz");
+  gPad->SetLogz();
+  if(!range_)
+  {
+    double x[]={minx_, maxx_, maxx_, minx_, minx_}, y[]={maxy_, maxy_, miny_, miny_, maxy_};
+    range_=new TCutG("range", 5, x, y);
+  }
+  range_->SetLineColor(2);
+  range_->SetLineWidth(2);
+  range_->Draw("same");
+  gPad->Write("h2");
 
   for (uint ibin = firstbin; ibin <= lastbin; ++ibin) {
     float xLeft=xAxis->GetBinLowEdge(ibin), xRight=xAxis->GetBinUpEdge(ibin);
@@ -51,13 +64,13 @@ void Fitter::Fit() {
     for (auto &p:par) cout << p << "\t";
     cout << endl;
 
-    if (isnan(chi2) || isinf(chi2)) chi2 = -1.;
+    if (chi2==std::numeric_limits<float>::quiet_NaN() || chi2==std::numeric_limits<float>::infinity()) chi2 = -1.;
 
     chi2_x.push_back(xMean);
     chi2_y.push_back(chi2);
 
     ibin+=nBins;
-    if (chi2 < 0. || chi2 > chi2_max_ || isExcluded(xMean)) continue;
+    if (/*chi2 < 0. || */chi2 > chi2_max_ || isExcluded(xMean)) continue;
 
     params.push_back(par);
     params_errors.push_back(par_err);
@@ -65,8 +78,7 @@ void Fitter::Fit() {
   }
 
   Parameters p;
-  p.SetParams(move(x), move(params), move(params_errors));
-  //     p.SetParticles();
+  p.SetParams(x, params, params_errors);
   TGraph chi2(chi2_x.size(), &(chi2_x[0]), &(chi2_y[0]));
   chi2.SetName("chi2");
   chi2.SetTitle("#chi^{2}/NDF;p (GeV/#it{c});#chi^{2}/NDF");
@@ -97,7 +109,7 @@ double Fitter::Fit1D(TH1 *h, vector<double>& par, vector<double>& par_err, doubl
   par = vector<double>(f->GetParameters(), f->GetParameters() + f->GetNpar());
   par_err = vector<double>(f->GetParErrors(), f->GetParErrors() + f->GetNpar());
 
-  vector <int> colors = {kBlack, kGreen + 2, kViolet, kOrange + 2, kCyan, kYellow + 3};
+  vector <int> colors = {kBlack, kGreen + 2, kViolet, kOrange + 2, kCyan, kYellow + 3, kMagenta, kOrange+2};
   if (particles_.size()>1)
   {
     int parIndex=0;
@@ -182,6 +194,7 @@ TF1* Fitter::ConstructFit1DFunction(double x) {
       if (parMax<parLimits.at(0)) parMax=parLimits.at(0);
 //      cout << iparam_all << ": min=" << parMin << " max=" << parMax << endl;
       f->SetParLimits(iparam_all, parMin, parMax);
+      if(parMin==parMax) f->FixParameter(iparam_all, parMin);
     }
   }
 //  cout << sumname << endl;
@@ -205,6 +218,7 @@ void Fitter::Clear() {
   maxy_ = -1.;
   range_=nullptr;
   chi2_max_ = 100.;
+  excludedX_.resize(0);
   outfilename_ = "out.root";
 }
 

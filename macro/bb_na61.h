@@ -1,16 +1,16 @@
 #include <map>
 
-double asymmGaus(double* xx, double* p) {
-  double x = xx[0];
-  double amp = p[0];
-  double mean = p[1];
-  double sig = p[2];
-  double delta = p[3];
-  if (x > mean) sig *= 1 + delta;
-  else
-    sig *= 1 - delta;
-  return amp * exp(-0.5 * (x - mean) * (x - mean) / sig / sig);
-}
+//double asymmGaus(double* xx, double* p) {
+//  double x = xx[0];
+//  double amp = p[0];
+//  double mean = p[1];
+//  double sig = p[2];
+//  double delta = p[3];
+//  if (x > mean) sig *= 1 + delta;
+//  else
+//    sig *= 1 - delta;
+//  return amp * exp(-0.5 * (x - mean) * (x - mean) / sig / sig);
+//}
 
 double bb_na61(double *log20p, double *par)
 {
