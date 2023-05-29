@@ -25,10 +25,6 @@ class BaseGetter {
  public:
   virtual ~BaseGetter() = default;
 
-  virtual double GetWeight(double var1, double var2, int pid) = 0;
-
-  virtual std::map<int, double> GetWeights(double var1, double var2) = 0;
-
   virtual int GetPid(double var1, double var2, double purity) = 0;
 
   virtual void Streamer(TBuffer&){};
@@ -64,20 +60,27 @@ class Getter : public TObject, public BaseGetter {
     return 1;
   }
 
-  double GetWeight(double var1, double var2, int pid) override {
-    // not yet implemented
-    return 1.0;
-  }
-  std::map<int, double> GetWeights(double var1, double var2) override {
-    return GetBayesianProbability(var1, var2);
-  }
-
   const ParticleFit& GetParticleFit(int pid) {
     auto it = species_.find(pid);
     if (it != species_.end()) {
       return it->second;
     }
     throw std::runtime_error("Particle " + std::to_string(pid) + " is not found!");
+  }
+
+  double GetEfficiency(double x, int pid, double purity)
+  {
+    if(species_.find(pid) == species_.end())
+      return 1;
+    auto part=species_.at(pid);
+    auto f=part.GetFunction();
+    auto ymin=f.GetXmin(), ymax=f.GetXmax();
+    auto n=f.GetNpx();
+    auto dy=(ymax-ymin)/n;
+    double integral=0;
+    for(double y=ymin+0.5*dy; y<ymax; y+=dy)
+      if(GetBayesianProbability(x, y).at(pid)>purity) integral+=dy*part.Eval(x, y);
+    return integral/part.Integral(x); 
   }
 
  private:
@@ -120,20 +123,6 @@ class CutGGetter : public TObject, public BaseGetter {
     }
 
     return -1;
-  }
-
-  double GetWeight(double var1, double var2, int pid) override {
-    return 1.0 * (GetPid(var1, var2, 1) == pid);
-  }
-
-  std::map<int, double> GetWeights(double var1, double var2) override {
-    std::map<int, double> result;
-
-    for (const auto& specie : species_) {
-      result.insert({specie.first, GetWeight(var1, var2, specie.first)});
-    }
-
-    return {};
   }
 
   void Draw(Option_t* option = "") override {

@@ -46,8 +46,19 @@ ClassImp(Pid::ParticleFit)
       exit(1);
 
     function_.SetParameters(&(GetOutputFunctionParams(x)[0]));
-    const double ret = function_.Eval(y);
 
-    return ret;
+    return function_.Eval(y);
+  }
+
+  double ParticleFit::Integral(double x) {
+    if (x > maxx_ || x < minx_) return 0.;
+
+    const uint npar = function_.GetNpar();
+    if (outputParametrization_.size() != npar)
+      exit(1);
+
+    function_.SetParameters(&(GetOutputFunctionParams(x)[0]));
+
+    return function_.Integral(minx_, maxx_);
   }
 }

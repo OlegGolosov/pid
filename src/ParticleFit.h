@@ -28,7 +28,8 @@ class ParticleFit {
 
   [[nodiscard]] std::vector<double> GetInputFunctionParams(float x) const;
   [[nodiscard]] std::vector<double> GetOutputFunctionParams(float x) const;
-  double Eval(double p, double m2);
+  double Eval(double x, double y);
+  double Integral(double x);
 
   void SetFitFunction(const TF1& function) { function_ = function; }
   void SetRangeX(float min, float max) { minx_ = min, maxx_ = max; }
