@@ -78,6 +78,11 @@ class ParticleFit {
     parFitLimits_ = parFitLimits; 
   }
 
+  void SetParFitLimit(int ipar, double min, double max) 
+  {
+    parFitLimits_.at(ipar)={min,max};
+  }
+
   void SetParLimits(const std::vector<std::vector<double>> parLimits) 
   {
     if (parLimits.size() != GetNpar()) {
